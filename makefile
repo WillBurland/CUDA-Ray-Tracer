@@ -17,9 +17,6 @@ all: $(OUT)
 $(OUT): $(OBJ) | $(BUILD_DIR)
 	@$(NVCC) $(FLAGS) $^ -o $@ > /dev/null
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	@$(NVCC) $(FLAGS) -c $< -o $@ > /dev/null
-
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu | $(OBJ_DIR)
 	@$(NVCC) $(FLAGS) -c $< -o $@ > /dev/null
 

@@ -3,35 +3,151 @@
 #include "../lib/stb_image_write.h"
 
 #include "constants.cuh"
+#include "hit_record.cuh"
+#include "ray.cuh"
 
-__device__ uchar4 shadePixel(int x, int y) {
-	uchar4 p;
-	p.x = static_cast<unsigned char>(255.0f * x / IMAGE_WIDTH);
-	p.y = static_cast<unsigned char>(255.0f * y / IMAGE_HEIGHT);
-	p.z = 0;
-	p.w = 255;
-	return p;
+__device__ bool lambertianScatter(Ray ray, HitRecord* hitRecord, float3* attenuation, Ray* scattered, ulong* seed) {
+	float3 scatterDir = hitRecord->normal + randUnitVec(seed);
+	if (nearZero(scatterDir))
+		scatterDir = hitRecord->normal;
+
+	scattered->origin = hitRecord->p;
+	scattered->direction = scatterDir;
+	scattered->invDirection = inv(scatterDir);
+	*attenuation = hitRecord->material.albedo;
+	return true;
 }
 
-__global__ void renderKernel(unsigned char* image, int width, int height) {
+__device__ bool metalScatter(Ray ray, HitRecord* hitRecord, float3* attenuation, Ray* scattered, ulong* seed) {
+	float3 reflected = reflect(unit(ray.direction), hitRecord->normal);
+	scattered->origin = hitRecord->p;
+	scattered->direction = hitRecord->material.fuzz > 0.0f ? reflected + randVecInUnitSphere(seed) * hitRecord->material.fuzz : reflected;
+	scattered->invDirection = inv(scattered->direction);
+	*attenuation = hitRecord->material.albedo;
+	return dot(scattered->direction, hitRecord->normal) > 0;
+}
+
+__device__ bool transparentScatter(Ray ray, HitRecord* hitRecord, float3* attenuation, Ray* scattered, ulong* seed) {
+	float refractionRatio = hitRecord->frontFace ? (1.0f / hitRecord->material.ior) : hitRecord->material.ior;
+
+	float3 unitDirection = unit(ray.direction);
+	float cosTheta = fminf(dot(unitDirection * -1, hitRecord->normal), 1.0f);
+	float sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
+
+	bool cannotRefract = refractionRatio * sinTheta > 1.0f;
+	float3 direction;
+
+	if (cannotRefract || reflectance(cosTheta, refractionRatio) > randFloat(seed)) {
+		direction = reflect(unitDirection, hitRecord->normal);
+	} else {
+		direction = refract(unitDirection, hitRecord->normal, refractionRatio);
+	}
+
+	scattered->origin = hitRecord->p;
+	scattered->direction = direction;
+	scattered->invDirection = inv(scattered->direction);
+	*attenuation = make_float3(1.0f, 1.0f, 1.0f);
+	return true;
+}
+
+__device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
+	float3 unitDirection = unit(ray.direction);
+	float t = 0.5f * (unitDirection.y + 1.0f);
+
+	float3 rayColour = make_float3(1.0f, 1.0f, 1.0f);
+
+	int currentBounces = 0;
+	HitRecord hitRecord;
+
+	while (currentBounces < MAX_BOUNCES) {
+		if (hitAnything(&hitRecord, ray, 0.001f, INFINITY, scene)) {
+			Ray scattered(ray.origin, ray.direction, ray.invDirection);
+			float3 attenuation;
+			switch (hitRecord.material.type) {
+				case 0: {
+					if (lambertianScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
+						ray = scattered;
+						rayColour *= attenuation;
+						currentBounces++;
+						continue;
+					}
+					return make_float3(0.0f, 0.0f, 0.0f);
+				}
+				case 1: {
+					if (metalScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
+						ray = scattered;
+						rayColour *= attenuation;
+						currentBounces++;
+						continue;
+					}
+					return make_float3(0.0f, 0.0f, 0.0f);
+				}
+				case 2: {
+					if (transparentScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
+						ray = scattered;
+						rayColour *= attenuation;
+						currentBounces++;
+						continue;
+					}
+					return hitRecord.material.albedo;
+				}
+				case 3: {
+					return rayColour * hitRecord.material.albedo;
+				}
+			}
+			continue;
+		}
+		break;
+	}
+
+	float3 background = (1.0f - t) * make_float3(1.0f, 1.0f, 1.0f) + t * make_float3(0.5f, 0.7f, 1.0f);
+	return rayColour * background;
+}
+
+__global__ void shadePixel(unsigned char* image, Scene* scene) {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	if (x >= width || y >= height)
+	if (x >= IMAGE_WIDTH || y >= IMAGE_HEIGHT)
 		return;
 
-	int idx = y * width + x;
-	uchar4 pixel = shadePixel(x, y);
+	int idx = (IMAGE_HEIGHT - 1 - y) * IMAGE_WIDTH + x;
+	ulong seed = nextSeed((ulong)idx);
 
-	image[idx * 3 + 0] = pixel.x;
-	image[idx * 3 + 1] = pixel.y;
-	image[idx * 3 + 2] = pixel.z;
+	float3 pixelColour = make_float3(0.0f, 0.0f, 0.0f);
+	float3 colourToAdd = make_float3(0.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {
+		float u = ((float)x + randFloat(&seed)) / IMAGE_WIDTH;
+		float v = ((float)y + randFloat(&seed)) / IMAGE_HEIGHT;
+
+		Ray ray = Ray(scene->camera, u, v, &seed);
+		colourToAdd = rayColour(ray, scene, &seed);
+
+		if (colourToAdd.x > 1.0f) colourToAdd.x = 1.0f;
+		if (colourToAdd.y > 1.0f) colourToAdd.y = 1.0f;
+		if (colourToAdd.z > 1.0f) colourToAdd.z = 1.0f;
+
+		if (colourToAdd.x < 0.0f) colourToAdd.x = 0.0f;
+		if (colourToAdd.y < 0.0f) colourToAdd.y = 0.0f;
+		if (colourToAdd.z < 0.0f) colourToAdd.z = 0.0f;
+
+		if (isnan(colourToAdd.x)) colourToAdd.x = 0.0f;
+		if (isnan(colourToAdd.y)) colourToAdd.y = 0.0f;
+		if (isnan(colourToAdd.z)) colourToAdd.z = 0.0f;
+
+		pixelColour = pixelColour + colourToAdd;
+	}
+
+	image[idx * 3 + 0] = sqrt(pixelColour.x / SAMPLES_PER_PIXEL) * 255.0f;
+	image[idx * 3 + 1] = sqrt(pixelColour.y / SAMPLES_PER_PIXEL) * 255.0f;
+	image[idx * 3 + 2] = sqrt(pixelColour.z / SAMPLES_PER_PIXEL) * 255.0f;
 }
 
-void renderImage(unsigned char* image, int width, int height) {
+void renderImage(unsigned char* image, Scene* scene) {
 	dim3 block(16, 16);
-	dim3 grid((width + block.x - 1) / block.x,
-			  (height + block.y - 1) / block.y);
+	dim3 grid((IMAGE_WIDTH + block.x - 1) / block.x,
+			  (IMAGE_HEIGHT + block.y - 1) / block.y);
 
-	renderKernel<<<grid, block>>>(image, width, height);
+	shadePixel<<<grid, block>>>(image, scene);
 	cudaDeviceSynchronize();
 }

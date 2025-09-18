@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cuda_runtime.h>
+#include "scene.cuh"
+
 #include <iostream>
 
-void renderImage(unsigned char* image, int width, int height);
+void renderImage(unsigned char* image, Scene* scene);
