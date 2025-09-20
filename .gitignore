@@ -1,2 +1,4 @@
 build
 output.png
+trace.nsys-rep
+trace.sqlite

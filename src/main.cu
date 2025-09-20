@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "../lib/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
@@ -45,12 +47,13 @@ int main() {
 
 	std::vector<Sphere> h_spheres;
 	h_spheres.push_back(Sphere({ 0.0f, -100.5f, -1.0f}, 100.0f, Material(make_float3(0.0f, 0.8f, 0.7f), 0.0f, 0.0f, 0)));
-	h_spheres.push_back(Sphere({ -4.5f,   1.8f, 0.5f},   2.5f, Material(make_float3(0.8f, 0.8f, 0.2f), 0.1f, 0.0f, 1)));
-	h_spheres.push_back(Sphere({ 0.0f,   1.8f, -4.5f},   2.5f, Material(make_float3(0.2f, 0.8f, 0.4f), 0.2f, 0.0f, 1)));
+	h_spheres.push_back(Sphere({ -4.5f,   1.8f, 0.5f},   2.5f, Material(make_float3(0.8f, 0.8f, 0.2f), 0.0f, 0.0f, 1)));
+	h_spheres.push_back(Sphere({ 0.0f,   1.8f, -4.5f},   2.5f, Material(make_float3(0.2f, 0.8f, 0.4f), 0.05f, 0.0f, 1)));
 	h_spheres.push_back(Sphere({ 2.1f,  0.27f, 2.0f},   0.8f, Material(make_float3(1.0f, 1.0f, 1.0f), 0.0f, 1.5f, 2)));
+	h_spheres.push_back(Sphere({ 2.5f,  -0.2f, 0.8f},   0.4f, Material(make_float3(1.0f, 1.0f, 1.0f), 0.0f, 0.0f, 3)));
 	int numSpheres = h_spheres.size();
 
-	std::ifstream meshFile("assets/utah_teapot.obj");
+	std::ifstream meshFile("assets/models/utah_teapot.obj");
 	if (!meshFile) {
 		printf("Unable to open OBJ file");
 		return 1;
@@ -65,12 +68,59 @@ int main() {
 		make_float3(1.0f, 1.0f, 1.0f), // scaling
 		make_float3(0.0f, -0.6f, 0.0f), // translation
 		make_float3(0.0f, -45.0f, 0.0f), // rotation (degrees)
-		Material(make_float3(0.7, 0.3, 0.9), 0.7f, 0.0f, 1),
+		Material(make_float3(0.7, 0.3, 0.9), 0.2f, 0.0f, 1),
 		h_triangles,
 		numTriangles,
-		h_boundingBox
+		h_boundingBox,
+		true
 	);
 	meshFile.close();
+
+	int width, height, channels;
+	float* data = stbi_loadf("assets/images/skybox.hdr", &width, &height, &channels, 3);
+	if (!data) {
+		printf("Unable to open image file");
+		return 1;
+	}
+
+	cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float4>();
+	cudaArray_t cuArray;
+	cudaMallocArray(&cuArray, &channelDesc, width, height);
+
+	std::vector<float4> h_pixels(width * height);
+	for (int i = 0; i < width * height; i++) {
+		h_pixels[i] = make_float4(
+			data[i * 3 + 0],
+			data[i * 3 + 1],
+			data[i * 3 + 2],
+			1.0f
+		);
+	}
+
+	cudaMemcpy2DToArray(
+		cuArray,
+		0,
+		0,
+		h_pixels.data(),
+		width * sizeof(float4),
+		width * sizeof(float4),
+		height,
+		cudaMemcpyHostToDevice
+	);
+
+	cudaResourceDesc resDesc = {};
+	resDesc.resType = cudaResourceTypeArray;
+	resDesc.res.array.array = cuArray;
+
+	cudaTextureDesc texDesc = {};
+	texDesc.addressMode[0] = cudaAddressModeWrap;
+	texDesc.addressMode[1] = cudaAddressModeClamp;
+	texDesc.filterMode = cudaFilterModeLinear;
+	texDesc.readMode = cudaReadModeElementType;
+	texDesc.normalizedCoords = 1;
+
+	cudaTextureObject_t texObj = 0;
+	cudaCreateTextureObject(&texObj, &resDesc, &texDesc, nullptr);
 
 	Triangle* d_triangles;
 	cudaMalloc(&d_triangles, numTriangles * sizeof(Triangle));
@@ -90,10 +140,10 @@ int main() {
 		make_float3(0.0f, 1.0f, 0.0f), // vUp
 		60.0f, // vFov
 		5.0f, // focusDistance
-		0.0f  // aperture
+		50.0f  // f-stop
 	);
 
-	Scene h_scene(d_spheres, numSpheres, d_triangles, numTriangles, h_boundingBox, h_camera);
+	Scene h_scene(d_spheres, numSpheres, d_triangles, numTriangles, h_boundingBox, texObj, width, height, h_camera);
 
 	Scene* d_scene;
 	cudaMalloc(&d_scene, sizeof(Scene));
@@ -129,6 +179,7 @@ int main() {
 	cudaFree(d_scene);
 	free(h_triangles);
 	free(h_boundingBox);
+	stbi_image_free(data);
 	delete[] hostImage;
 	return 0;
 }

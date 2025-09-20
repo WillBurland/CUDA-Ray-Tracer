@@ -11,13 +11,19 @@ struct Scene {
 	Triangle* triangles;
 	int numTriangles;
 	BoundingBox* boundingBox;
+	cudaTextureObject_t hdrTex;
+	int hdrImageWidth;
+	int hdrImageHeight;
 	Camera camera;
 
-	Scene(Sphere* spheres, int numSpheres, Triangle* triangles, int numTriangles, BoundingBox* boundingBox, Camera camera) :
+	Scene(Sphere* spheres, int numSpheres, Triangle* triangles, int numTriangles, BoundingBox* boundingBox, cudaTextureObject_t hdrTex, int hdrImageWidth, int hdrImageHeight, Camera camera) :
 		spheres(spheres),
 		numSpheres(numSpheres),
 		triangles(triangles),
 		numTriangles(numTriangles),
 		boundingBox(boundingBox),
+		hdrTex(hdrTex),
+		hdrImageWidth(hdrImageWidth),
+		hdrImageHeight(hdrImageHeight),
 		camera(camera) {}
 };

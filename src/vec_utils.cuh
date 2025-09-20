@@ -163,3 +163,10 @@ __host__ __device__ inline bool nearZero(float3 a) {
 	float s = 1e-8;
 	return (fabsf(a.x) < s) && (fabsf(a.y) < s) && (fabsf(a.z) < s);
 }
+
+__host__ __device__ inline float2 uv(float3 n) {
+	n = unit(n);
+	return make_float2(
+		0.5f + atan2(n.z, n.x) / (2.0f * (float)M_PI),
+		0.5f - asin(n.y) / (float)M_PI);
+}

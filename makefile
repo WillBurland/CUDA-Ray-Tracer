@@ -1,5 +1,5 @@
 NVCC       = nvcc
-FLAGS      = -O2 -std=c++17 -I./lib -MMD -MP -arch=sm_75
+FLAGS      = -O2 -std=c++17 -I./lib -MMD -MP -arch=sm_75 -diag-suppress 550
 
 SRC_DIR    = src
 BUILD_DIR  = build

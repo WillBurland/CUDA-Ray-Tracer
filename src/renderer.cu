@@ -48,8 +48,6 @@ __device__ bool transparentScatter(Ray ray, HitRecord* hitRecord, float3* attenu
 
 __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 	float3 unitDirection = unit(ray.direction);
-	float t = 0.5f * (unitDirection.y + 1.0f);
-
 	float3 rayColour = make_float3(1.0f, 1.0f, 1.0f);
 
 	int currentBounces = 0;
@@ -96,8 +94,11 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 		break;
 	}
 
-	float3 background = (1.0f - t) * make_float3(1.0f, 1.0f, 1.0f) + t * make_float3(0.5f, 0.7f, 1.0f);
-	return rayColour * background;
+	float2 uvCoords = uv(ray.direction);
+	float4 texColour = tex2D<float4>(scene->hdrTex, uvCoords.x, uvCoords.y);
+	float3 hdriColour = make_float3(texColour.x, texColour.y, texColour.z);
+	
+	return rayColour * hdriColour;
 }
 
 __global__ void shadePixel(unsigned char* image, Scene* scene) {

@@ -75,10 +75,8 @@ __device__ bool hitTriangle(Triangle t, Ray r, float tMin, float tMax, HitRecord
 	if (t0 > tMin && t0 < tMax)	{
 		hit->t = t0;
 		hit->p = rayAt(r, t0);
-		float w = 1.0f - u - v;
-		float3 interpolatedNormal = unit(w * t.n0 + u * t.n1 + v * t.n2);
-		setFaceNormal(hit, r, interpolatedNormal);
 		hit->material = t.material;
+		setFaceNormal(hit, r, unit(t.smoothNormals ? (1.0f - u - v) * t.n0 + u * t.n1 + v * t.n2 : cross(edge1, edge2)));
 
 		return true;
 	}

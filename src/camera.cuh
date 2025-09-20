@@ -15,7 +15,9 @@ struct Camera {
 	float focusDistance;
 	float aperture;
 
-	Camera(float3 lookFrom, float3 lookAt, float3 vUp, float vFov, float focusDistance, float aperture) {
+	Camera(float3 lookFrom, float3 lookAt, float3 vUp, float vFov, float focusDistance, float fStop) {
+		float aperture = 2.0f * atanf(1.0f / (2.0f * fStop));
+
 		float theta = vFov * (float)3.141592654 / 180.0f;
 		float h = tan(theta / 2);
 		float viewportHeight = 2.0f * h * focusDistance;

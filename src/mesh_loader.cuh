@@ -39,7 +39,7 @@ float3 rotate(const float3 &v, const float3 &rotDeg) {
 }
 
 
-void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, float3 rotation, Material material, Triangle* &h_triangles, int &numTriangles, BoundingBox* &h_boundingBox) {
+void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, float3 rotation, Material material, Triangle* &h_triangles, int &numTriangles, BoundingBox* &h_boundingBox, bool smoothNormals) {
 	std::vector<float3> vertices, normals;
 	std::vector<Triangle> triangles;
 	std::string line;
@@ -114,7 +114,8 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 					n1,
 					n2,
 					material,
-					0
+					0,
+					smoothNormals
 				));
 			}
 		}
