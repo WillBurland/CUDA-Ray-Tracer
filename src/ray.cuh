@@ -7,7 +7,7 @@ struct Ray {
 
 	__device__ Ray(float3 origin, float3 direction, float3 invDirection) :
 		origin(origin),
-		direction(direction),
+		direction(unit(direction)),
 		invDirection(invDirection) {}
 
 	__device__ Ray(Camera camera, float u, float v, ulong* seed) {

@@ -15,10 +15,10 @@ DEP        = $(OBJ:.o=.d)
 all: $(OUT)
 
 $(OUT): $(OBJ) | $(BUILD_DIR)
-	@$(NVCC) $(FLAGS) $^ -o $@ > /dev/null
+	$(NVCC) $(FLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu | $(OBJ_DIR)
-	@$(NVCC) $(FLAGS) -c $< -o $@ > /dev/null
+	$(NVCC) $(FLAGS) -c $< -o $@
 
 $(BUILD_DIR) $(OBJ_DIR):
 	@mkdir -p $@

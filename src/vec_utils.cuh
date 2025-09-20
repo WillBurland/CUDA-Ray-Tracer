@@ -8,6 +8,13 @@ __host__ __device__ inline float3 operator+(float3 a, float3 b) {
 	);
 }
 
+__host__ __device__ inline float3& operator+=(float3& a, float3 b) {
+	a.x += b.x;
+	a.y += b.y;
+	a.z += b.z;
+	return a;
+}
+
 __host__ __device__ inline float3 operator-(float3 a, float3 b) {
 	return make_float3(
 		a.x - b.x,
@@ -107,8 +114,7 @@ __host__ __device__ inline float3 refract(float3 uv, float3 n, float etaiOverEta
 	return rOutPerp + rOutParallel;
 }
 
-__host__ __device__ inline float reflectance(float cosine, float refIdx)
-{
+__host__ __device__ inline float reflectance(float cosine, float refIdx) {
 	float r0 = (1 - refIdx) / (1 + refIdx);
 	r0 *= r0;
 	return r0 + (1 - r0) * powf((1 - cosine), 5);

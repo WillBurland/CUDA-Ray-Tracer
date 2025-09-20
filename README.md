@@ -8,6 +8,41 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 
 None, while I get this project up to feature parity with the OpenCL project.
 
+## Feature set
+✅ - Implemented
+
+🟨 - Partially implemented
+
+❌ - Not implemented
+
+➖ - Not applicable
+
+| Feature               | Ray-Caster | Ray-Tracer-Legacy | OpenCL-Ray-Tracer | CUDA-Ray-Tracer |
+|-----------------------|------------|-------------------|-------------------|-----------------|
+| Real time             | ✅         | ❌                | ❌                | ❌             |
+| Actual ray tracer     | ❌         | ✅                | ✅                | ✅             |
+| GPU rendering         | ❌         | ❌                | ✅                | ✅             |
+| Rendering preview     | ➖         | ❌                | ✅                | ❌             |
+| Sphere primitives     | ✅         | ✅                | ✅                | ✅             |
+| Triangles             | ❌         | ❌                | ✅                | ✅             |
+| OBJ meshes            | ➖         | ➖                | 🟨                | ✅             |
+| >1 mesh at a time     | ➖         | ➖                | ❌                | ❌             |
+| Mesh translation      | ➖         | ➖                | ✅                | ✅             |
+| Mesh scaling          | ➖         | ➖                | ✅                | ✅             |
+| Mesh rotation         | ➖         | ➖                | ❌                | ✅             |
+| Interpolated normals  | ➖         | ➖                | ❌                | ✅             |
+| BVH                   | ➖         | ➖                | 🟨                | 🟨             |
+| Textures              | ❌         | ❌                | ❌                | ❌             |
+| Depth of field        | ❌         | ❌                | ✅                | ❌             |
+| Point lights          | ✅         | ❌                | ❌                | ❌             |
+| HDRI                  | ❌         | ❌                | ✅                | ❌             |
+| JSON scene descriptor | ❌         | ❌                | ❌                | ❌             |
+| Diffuse material      | ✅         | ✅                | ✅                | ✅             |
+| Metalic material      | ❌         | ✅                | ✅                | ✅             |
+| Transparent material  | ❌         | ❌                | ✅                | ✅             |
+| Emmisive material     | ❌         | ❌                | 🟨                | 🟨             |
+| Specular/gloss        | ✅         | ❌                | ❌                | ❌             |
+
 ## Comparison to previous projects
 
 Note: This isn't _really_ a fair comparison due to the varying feature set, complexity and my personal knowledge between the projects, but serves as a rough benchmark.

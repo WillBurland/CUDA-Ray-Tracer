@@ -1,10 +1,6 @@
 #include "renderer.cuh"
 
-#include "../lib/stb_image_write.h"
-
-#include "constants.cuh"
 #include "hit_record.cuh"
-#include "ray.cuh"
 
 __device__ bool lambertianScatter(Ray ray, HitRecord* hitRecord, float3* attenuation, Ray* scattered, ulong* seed) {
 	float3 scatterDir = hitRecord->normal + randUnitVec(seed);
@@ -111,7 +107,7 @@ __global__ void shadePixel(unsigned char* image, Scene* scene) {
 		return;
 
 	int idx = (IMAGE_HEIGHT - 1 - y) * IMAGE_WIDTH + x;
-	ulong seed = nextSeed((ulong)idx);
+	ulong seed = nextSeed((ulong)(idx * idx));
 
 	float3 pixelColour = make_float3(0.0f, 0.0f, 0.0f);
 	float3 colourToAdd = make_float3(0.0f, 0.0f, 0.0f);
@@ -138,9 +134,9 @@ __global__ void shadePixel(unsigned char* image, Scene* scene) {
 		pixelColour = pixelColour + colourToAdd;
 	}
 
-	image[idx * 3 + 0] = sqrt(pixelColour.x / SAMPLES_PER_PIXEL) * 255.0f;
-	image[idx * 3 + 1] = sqrt(pixelColour.y / SAMPLES_PER_PIXEL) * 255.0f;
-	image[idx * 3 + 2] = sqrt(pixelColour.z / SAMPLES_PER_PIXEL) * 255.0f;
+	image[idx * 3 + 0] = sqrtf(pixelColour.x / SAMPLES_PER_PIXEL) * 255.0f;
+	image[idx * 3 + 1] = sqrtf(pixelColour.y / SAMPLES_PER_PIXEL) * 255.0f;
+	image[idx * 3 + 2] = sqrtf(pixelColour.z / SAMPLES_PER_PIXEL) * 255.0f;
 }
 
 void renderImage(unsigned char* image, Scene* scene) {

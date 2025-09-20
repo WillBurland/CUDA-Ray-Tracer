@@ -6,7 +6,7 @@ struct Material {
 	float ior;
 	int type;
 
-   __device__ Material() :
+   __host__ __device__ Material() :
 		albedo(make_float3(0.0f, 0.0f, 0.0f)),
 		fuzz(0.0f),
 		ior(1.0f),
