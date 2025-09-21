@@ -6,7 +6,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 
 ## Sample image from a recent commit
 
-None, while I get this project up to feature parity with the OpenCL project.
+<img width="1920" height="1080" alt="output" src="https://github.com/user-attachments/assets/45f5cfbe-463c-4663-82b1-cddcbbd80ffc" />
 
 ## Feature set
 ✅ - Implemented
@@ -33,9 +33,9 @@ None, while I get this project up to feature parity with the OpenCL project.
 | Interpolated normals  | ➖         | ➖                | ❌                | ✅             |
 | BVH                   | ➖         | ➖                | 🟨                | 🟨             |
 | Textures              | ❌         | ❌                | ❌                | ❌             |
-| Depth of field        | ❌         | ❌                | ✅                | ❌             |
+| Depth of field        | ❌         | ❌                | ✅                | ✅             |
 | Point lights          | ✅         | ❌                | ❌                | ❌             |
-| HDRI                  | ❌         | ❌                | ✅                | ❌             |
+| HDRI                  | ❌         | ❌                | ✅                | ✅             |
 | JSON scene descriptor | ❌         | ❌                | ❌                | ❌             |
 | Diffuse material      | ✅         | ✅                | ✅                | ✅             |
 | Metalic material      | ❌         | ✅                | ✅                | ✅             |
