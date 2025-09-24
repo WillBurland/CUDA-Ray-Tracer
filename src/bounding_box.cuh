@@ -1,10 +1,8 @@
 #pragma once
 
 struct BoundingBox {
-	int id;
-	int parentId;
-	float3 min;
-	float3 max;
+	int id, parentId;
+	float3 min, max;
 
 	BoundingBox() :
 		id(-1),

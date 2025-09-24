@@ -86,8 +86,16 @@ A decent performance benefit is still found when moving from OpenCL to CUDA due 
 
 ## To-do
 
-- Reach feature parity with OpenCL-Ray-Tracer
-- Figure out where I go from there
+- JSON scene descriptor
+- Proper BVH
+- Rendering preview
+- Multiple mesh support
+- Textures
+- Point lights
+- Importance sampling
+- Little optimisations:
+	- Store materials indexed globally, rather than per object
+	- Precompute things such as triangle edges
 
 ## Building the project
 

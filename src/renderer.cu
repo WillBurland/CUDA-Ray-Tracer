@@ -58,7 +58,7 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 			Ray scattered(ray.origin, ray.direction, ray.invDirection);
 			float3 attenuation;
 			switch (hitRecord.material.type) {
-				case 0: {
+				case LAMBERTIAN: {
 					if (lambertianScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
 						ray = scattered;
 						rayColour *= attenuation;
@@ -67,7 +67,7 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 					}
 					return make_float3(0.0f, 0.0f, 0.0f);
 				}
-				case 1: {
+				case METAL: {
 					if (metalScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
 						ray = scattered;
 						rayColour *= attenuation;
@@ -76,7 +76,7 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 					}
 					return make_float3(0.0f, 0.0f, 0.0f);
 				}
-				case 2: {
+				case TRANSPARENT: {
 					if (transparentScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
 						ray = scattered;
 						rayColour *= attenuation;
@@ -85,8 +85,8 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 					}
 					return hitRecord.material.albedo;
 				}
-				case 3: {
-					return rayColour * hitRecord.material.albedo;
+				case EMISSIVE: {
+					return rayColour + hitRecord.material.albedo;
 				}
 			}
 			continue;
@@ -120,24 +120,24 @@ __global__ void shadePixel(unsigned char* image, Scene* scene) {
 		Ray ray = Ray(scene->camera, u, v, &seed);
 		colourToAdd = rayColour(ray, scene, &seed);
 
-		if (colourToAdd.x > 1.0f) colourToAdd.x = 1.0f;
-		if (colourToAdd.y > 1.0f) colourToAdd.y = 1.0f;
-		if (colourToAdd.z > 1.0f) colourToAdd.z = 1.0f;
-
-		if (colourToAdd.x < 0.0f) colourToAdd.x = 0.0f;
-		if (colourToAdd.y < 0.0f) colourToAdd.y = 0.0f;
-		if (colourToAdd.z < 0.0f) colourToAdd.z = 0.0f;
-
 		if (isnan(colourToAdd.x)) colourToAdd.x = 0.0f;
 		if (isnan(colourToAdd.y)) colourToAdd.y = 0.0f;
 		if (isnan(colourToAdd.z)) colourToAdd.z = 0.0f;
 
-		pixelColour = pixelColour + colourToAdd;
+		pixelColour += colourToAdd;
 	}
 
-	image[idx * 3 + 0] = sqrtf(pixelColour.x / SAMPLES_PER_PIXEL) * 255.0f;
-	image[idx * 3 + 1] = sqrtf(pixelColour.y / SAMPLES_PER_PIXEL) * 255.0f;
-	image[idx * 3 + 2] = sqrtf(pixelColour.z / SAMPLES_PER_PIXEL) * 255.0f;
+	pixelColour /= (float)SAMPLES_PER_PIXEL;
+
+	pixelColour.x = sqrtf(pixelColour.x);
+	pixelColour.y = sqrtf(pixelColour.y);
+	pixelColour.z = sqrtf(pixelColour.z);
+
+	pixelColour = clamp(pixelColour, 0.0f, 1.0f);
+
+	image[idx * 3 + 0] = pixelColour.x * 255.0f;
+	image[idx * 3 + 1] = pixelColour.y * 255.0f;
+	image[idx * 3 + 2] = pixelColour.z * 255.0f;
 }
 
 void renderImage(unsigned char* image, Scene* scene) {

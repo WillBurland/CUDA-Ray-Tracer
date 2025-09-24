@@ -46,11 +46,11 @@ int main() {
 	cudaMalloc(&image, IMAGE_WIDTH * IMAGE_HEIGHT * BYTES_PER_PIXEL);
 
 	std::vector<Sphere> h_spheres;
-	h_spheres.push_back(Sphere({ 0.0f, -100.5f, -1.0f}, 100.0f, Material(make_float3(0.0f, 0.8f, 0.7f), 0.0f, 0.0f, 0)));
-	h_spheres.push_back(Sphere({ -4.5f,   1.8f, 0.5f},   2.5f, Material(make_float3(0.8f, 0.8f, 0.2f), 0.0f, 0.0f, 1)));
-	h_spheres.push_back(Sphere({ 0.0f,   1.8f, -4.5f},   2.5f, Material(make_float3(0.2f, 0.8f, 0.4f), 0.05f, 0.0f, 1)));
-	h_spheres.push_back(Sphere({ 2.1f,  0.27f, 2.0f},   0.8f, Material(make_float3(1.0f, 1.0f, 1.0f), 0.0f, 1.5f, 2)));
-	h_spheres.push_back(Sphere({ 2.5f,  -0.2f, 0.8f},   0.4f, Material(make_float3(1.0f, 1.0f, 1.0f), 0.0f, 0.0f, 3)));
+	h_spheres.push_back(Sphere({  0.0f, -100.5f, -1.0f}, 100.0f, Material::Lambertian(make_float3(0.3f, 0.5f, 0.4f))));
+	h_spheres.push_back(Sphere({ -4.5f,    1.8f,  0.5f},   2.5f, Material::Metal(make_float3(0.8f, 0.8f, 0.3f), 0.0f)));
+	h_spheres.push_back(Sphere({  0.0f,    1.8f, -4.5f},   2.5f, Material::Metal(make_float3(0.3f, 0.8f, 0.3f), 0.05f)));
+	h_spheres.push_back(Sphere({  2.1f,    0.27f, 2.0f},   0.8f, Material::Transparent(1.5f)));
+	h_spheres.push_back(Sphere({  2.5f,   -0.2f,  0.8f},   0.4f, Material::Emissive(make_float3(1.0f, 1.0f, 1.0f), 1.0f)));
 	int numSpheres = h_spheres.size();
 
 	std::ifstream meshFile("assets/models/utah_teapot.obj");
@@ -65,10 +65,10 @@ int main() {
 
 	loadTriangles(
 		meshFile,
-		make_float3(1.0f, 1.0f, 1.0f), // scaling
-		make_float3(0.0f, -0.6f, 0.0f), // translation
+		make_float3(1.0f,   1.0f, 1.0f), // scaling
+		make_float3(0.0f,  -0.6f, 0.0f), // translation
 		make_float3(0.0f, -45.0f, 0.0f), // rotation (degrees)
-		Material(make_float3(0.7, 0.3, 0.9), 0.2f, 0.0f, 1),
+		Material(make_float3(0.3f, 0.3f, 0.8f), 0.2f, 0.0f, 1),
 		h_triangles,
 		numTriangles,
 		h_boundingBox,

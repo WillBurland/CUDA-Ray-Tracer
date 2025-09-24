@@ -70,6 +70,13 @@ __host__ __device__ inline float3 operator/(float a, float3 b) {
 	);
 }
 
+__host__ __device__ inline float3& operator/=(float3& a, float b) {
+	a.x /= b;
+	a.y /= b;
+	a.z /= b;
+	return a;
+}
+
 __host__ __device__ inline float dot(float3 a, float3 b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
@@ -169,4 +176,12 @@ __host__ __device__ inline float2 uv(float3 n) {
 	return make_float2(
 		0.5f + atan2(n.z, n.x) / (2.0f * (float)M_PI),
 		0.5f - asin(n.y) / (float)M_PI);
+}
+
+__host__ __device__ inline float3 clamp(float3 a, float min, float max) {
+	return make_float3(
+		a.x = fminf(fmaxf(a.x, min), max),
+		a.y = fminf(fmaxf(a.y, min), max),
+		a.z = fminf(fmaxf(a.z, min), max)
+	);
 }

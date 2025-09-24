@@ -5,15 +5,10 @@
 
 struct Camera {
 	float3 origin;
-	float3 horizontal;
-	float3 vertical;
-	float3 lowerLeftCorner;
-	float3 defocusDiscU;
-	float3 defocusDiscV;
-	float3 blockSize;
-	float3 blockOffset;
-	float focusDistance;
-	float aperture;
+	float3 horizontal, vertical, lowerLeftCorner;
+	float3 defocusDiscU, defocusDiscV;
+	float3 blockSize, blockOffset;
+	float focusDistance, aperture;
 
 	Camera(float3 lookFrom, float3 lookAt, float3 vUp, float vFov, float focusDistance, float fStop) {
 		float aperture = 2.0f * atanf(1.0f / (2.0f * fStop));
@@ -37,7 +32,7 @@ struct Camera {
 		float3 defocusDiscU = u * defocusRadius;
 		float3 defocusDiscV = v * defocusRadius;
 
-		this->blockOffset     = make_float3(0, 0, 0);
+		this->blockOffset     = make_float3(0.0f, 0.0f, 0.0f);
 		this->origin          = lookFrom;
 		this->horizontal      = viewportU;
 		this->vertical        = viewportV;

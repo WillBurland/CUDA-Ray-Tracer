@@ -1,9 +1,7 @@
 #pragma once
 
 struct Ray {
-	float3 origin;
-	float3 direction;
-	float3 invDirection;
+	float3 origin, direction, invDirection;
 
 	__device__ Ray(float3 origin, float3 direction, float3 invDirection) :
 		origin(origin),
