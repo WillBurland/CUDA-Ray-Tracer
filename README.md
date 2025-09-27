@@ -31,7 +31,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 | Mesh scaling          | ➖         | ➖                | ✅                | ✅             |
 | Mesh rotation         | ➖         | ➖                | ❌                | ✅             |
 | Interpolated normals  | ➖         | ➖                | ❌                | ✅             |
-| BVH                   | ➖         | ➖                | 🟨                | 🟨             |
+| BVH                   | ➖         | ➖                | 🟨                | ✅             |
 | Textures              | ❌         | ❌                | ❌                | ❌             |
 | Depth of field        | ❌         | ❌                | ✅                | ✅             |
 | Point lights          | ✅         | ❌                | ❌                | ❌             |
@@ -87,7 +87,6 @@ A decent performance benefit is still found when moving from OpenCL to CUDA due 
 ## To-do
 
 - JSON scene descriptor
-- Proper BVH
 - Rendering preview
 - Multiple mesh support
 - Textures

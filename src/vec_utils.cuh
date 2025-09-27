@@ -1,5 +1,9 @@
 #pragma once
 
+__host__ __device__ inline float3 make_float3(float a) {
+	return make_float3(a, a, a);
+}
+
 __host__ __device__ inline float3 operator+(float3 a, float3 b) {
 	return make_float3(
 		a.x + b.x,
@@ -99,7 +103,7 @@ __host__ __device__ inline float length(float3 a) {
 
 __host__ __device__ inline float3 unit(float3 a) {
 	float len = length(a);
-	return len > 0.0f ? (a / len) : make_float3(0.0f, 0.0f, 0.0f);
+	return len > 0.0f ? (a / len) : make_float3(0.0f);
 }
 
 __host__ __device__ inline float3 inv(float3 a) {
@@ -183,5 +187,25 @@ __host__ __device__ inline float3 clamp(float3 a, float min, float max) {
 		a.x = fminf(fmaxf(a.x, min), max),
 		a.y = fminf(fmaxf(a.y, min), max),
 		a.z = fminf(fmaxf(a.z, min), max)
+	);
+}
+
+__host__ __device__ inline float maxComponent(float3 a) {
+	return fmaxf(fmaxf(a.x, a.y), a.z);
+}
+
+__host__ __device__ inline float3 fminf3(const float3 &a, const float3 &b) {
+	return make_float3(
+		fminf(a.x, b.x),
+		fminf(a.y, b.y),
+		fminf(a.z, b.z)
+	);
+}
+
+__host__ __device__ inline float3 fmaxf3(const float3 &a, const float3 &b) {
+	return make_float3(
+		fmaxf(a.x, b.x),
+		fmaxf(a.y, b.y),
+		fmaxf(a.z, b.z)
 	);
 }

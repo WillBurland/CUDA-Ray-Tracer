@@ -76,6 +76,27 @@ int main() {
 	);
 	meshFile.close();
 
+	std::vector<int> triIndices(numTriangles);
+	for (int i = 0; i < numTriangles; i++)
+		triIndices[i] = i;
+
+	std::vector<BVHNode> h_nodes(numTriangles * 2);
+	int nodeCount = 0;
+	std::vector<Triangle> h_triVec(h_triangles, h_triangles + numTriangles);
+
+	buildBVH(h_nodes.data(), nodeCount, triIndices, 0, numTriangles, h_triVec);
+
+	h_nodes.resize(nodeCount);
+
+	BVHNode* d_nodes;
+	cudaMalloc(&d_nodes, h_nodes.size() * sizeof(BVHNode));
+	cudaMemcpy(d_nodes, h_nodes.data(), h_nodes.size() * sizeof(BVHNode), cudaMemcpyHostToDevice);
+
+	int* d_triIndices;
+	cudaMalloc(&d_triIndices, triIndices.size() * sizeof(int));
+	cudaMemcpy(d_triIndices, triIndices.data(), triIndices.size() * sizeof(int), cudaMemcpyHostToDevice);
+
+
 	int width, height, channels;
 	float* data = stbi_loadf("assets/images/skybox.hdr", &width, &height, &channels, 3);
 	if (!data) {
@@ -143,7 +164,15 @@ int main() {
 		50.0f  // f-stop
 	);
 
-	Scene h_scene(d_spheres, numSpheres, d_triangles, numTriangles, h_boundingBox, texObj, width, height, h_camera);
+	Scene h_scene(
+		d_spheres, numSpheres,
+		d_triangles, numTriangles,
+		d_boundingBox,
+		d_nodes, h_nodes.size(),
+		d_triIndices,
+		texObj, width, height,
+		h_camera
+	);
 
 	Scene* d_scene;
 	cudaMalloc(&d_scene, sizeof(Scene));

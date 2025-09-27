@@ -10,8 +10,8 @@ struct HitRecord {
 	Material material;
 
 	__device__ HitRecord() :
-		p(make_float3(0.0f, 0.0f, 0.0f)),
-		normal(make_float3(0.0f, 0.0f, 0.0f)),
+		p(make_float3(0.0f)),
+		normal(make_float3(0.0f)),
 		t(0.0f),
 		frontFace(false),
 		material() {}
@@ -49,10 +49,8 @@ __device__ bool hitSphere(Sphere s, Ray r, float tMin, float tMax, HitRecord* hi
 }
 
 __device__ bool hitTriangle(Triangle t, Ray r, float tMin, float tMax, HitRecord* hit) {
-	float3 edge1 = t.p1 - t.p0;
-	float3 edge2 = t.p2 - t.p0;
-	float3 h = cross(r.direction, edge2);
-	float a = dot(edge1, h);
+	float3 h = cross(r.direction, t.edge2);
+	float a = dot(t.edge1, h);
 
 	if (fabsf(a) < 1e-8f)
 		return false;
@@ -64,19 +62,19 @@ __device__ bool hitTriangle(Triangle t, Ray r, float tMin, float tMax, HitRecord
 	if (u < 0.0f || u > 1.0f)
 		return false;
 
-	float3 q = cross(s, edge1);
+	float3 q = cross(s, t.edge1);
 	float v = f * dot(r.direction, q);
 
 	if (v < 0.0f || u + v > 1.0f)
 		return false;
 
-	float t0 = f * dot(edge2, q);
+	float t0 = f * dot(t.edge2, q);
 
 	if (t0 > tMin && t0 < tMax)	{
 		hit->t = t0;
 		hit->p = rayAt(r, t0);
 		hit->material = t.material;
-		setFaceNormal(hit, r, unit(t.smoothNormals ? (1.0f - u - v) * t.n0 + u * t.n1 + v * t.n2 : cross(edge1, edge2)));
+		setFaceNormal(hit, r, unit(t.smoothNormals ? (1.0f - u - v) * t.n0 + u * t.n1 + v * t.n2 : t.faceNormal));
 
 		return true;
 	}
@@ -84,26 +82,53 @@ __device__ bool hitTriangle(Triangle t, Ray r, float tMin, float tMax, HitRecord
 	return false;
 }
 
-__device__ bool hitBoundingBox(BoundingBox box, Ray r) {
-	float tx1 = (box.min.x - r.origin.x) * r.invDirection.x;
-	float tx2 = (box.max.x - r.origin.x) * r.invDirection.x;
+__device__ bool hitBoundingBox(const float3& min, const float3& max, const Ray& r) {
+	float3 t1 = (min - r.origin) * r.invDirection;
+	float3 t2 = (max - r.origin) * r.invDirection;
 
-	float tmin = fminf(tx1, tx2);
-	float tmax = fmaxf(tx1, tx2);
+	float3 tmin3 = fminf3(t1, t2);
+	float3 tmax3 = fmaxf3(t1, t2);
 
-	float ty1 = (box.min.y - r.origin.y) * r.invDirection.y;
-	float ty2 = (box.max.y - r.origin.y) * r.invDirection.y;
-
-	tmin = fmaxf(tmin, fminf(ty1, ty2));
-	tmax = fminf(tmax, fmaxf(ty1, ty2));
-
-	float tz1 = (box.min.z - r.origin.z) * r.invDirection.z;
-	float tz2 = (box.max.z - r.origin.z) * r.invDirection.z;
-
-	tmin = fmaxf(tmin, fminf(tz1, tz2));
-	tmax = fminf(tmax, fmaxf(tz1, tz2));
+	float tmin = fmaxf(fmaxf(tmin3.x, tmin3.y), tmin3.z);
+	float tmax = fminf(fminf(tmax3.x, tmax3.y), tmax3.z);
 
 	return tmax > fmaxf(tmin, 0.0f);
+}
+
+
+__device__ bool hitBVH(BVHNode* nodes, Triangle* tris, int* triIndices, Ray& ray, float tMin, float tMax, HitRecord* outHit) {
+	int stack[64];
+	int sp = 0;
+	stack[sp++] = 0;
+
+	bool hitAnything = false;
+	float closest = tMax;
+	HitRecord tempHit;
+
+	while (sp > 0) {
+		BVHNode& node = nodes[stack[--sp]];
+
+		if (!hitBoundingBox(node.min, node.max, ray))
+			continue;
+
+		if (node.count > 0) {
+			for (int i = 0; i < node.count; ++i) {
+				int triIdx = triIndices[node.leftFirst + i];
+				if (hitTriangle(tris[triIdx], ray, tMin, closest, &tempHit)) {
+					hitAnything = true;
+					closest = tempHit.t;
+					*outHit = tempHit;
+				}
+			}
+		} else {
+			if (node.leftFirst >= 0)
+				stack[sp++] = node.leftFirst;
+			if (node.rightChild >= 0)
+				stack[sp++] = node.rightChild;
+		}
+	}
+
+	return hitAnything;
 }
 
 __device__ bool hitAnything(HitRecord* hitRecord, Ray ray, float tMin, float tMax, Scene* scene) {
@@ -119,13 +144,11 @@ __device__ bool hitAnything(HitRecord* hitRecord, Ray ray, float tMin, float tMa
 		}
 	}
 
-	if (hitBoundingBox(scene->boundingBox[0], ray)) {
-		for (int i = 0; i < scene->numTriangles; i++) {
-			if (hitTriangle(scene->triangles[i], ray, tMin, closestSoFar, &temp)) {
-				hitAnything = true;
-				closestSoFar = temp.t;
-				*hitRecord = temp;
-			}
+	if (scene->numTriangles > 0) {
+		if (hitBVH(scene->bvhNodes, scene->triangles, scene->triIndices, ray, tMin, closestSoFar, &temp)) {
+			hitAnything = true;
+			closestSoFar = temp.t;
+			*hitRecord = temp;
 		}
 	}
 

@@ -7,9 +7,8 @@ OBJ_DIR    = $(BUILD_DIR)/obj
 TARGET     = raytracer
 OUT        = $(BUILD_DIR)/$(TARGET)
 
-SRC        = $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*.cu)
-OBJ        = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(SRC))) \
-             $(patsubst $(SRC_DIR)/%.cu,$(OBJ_DIR)/%.o,$(filter %.cu,$(SRC)))
+SRC        = $(wildcard $(SRC_DIR)/*.cu)
+OBJ        = $(patsubst $(SRC_DIR)/%.cu,$(OBJ_DIR)/%.o,$(SRC))
 DEP        = $(OBJ:.o=.d)
 
 all: $(OUT)

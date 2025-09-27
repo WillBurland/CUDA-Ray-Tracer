@@ -1,7 +1,6 @@
 #pragma once
 
 #include "constants.cuh"
-#include "vec_utils.cuh"
 
 struct Camera {
 	float3 origin;
@@ -22,8 +21,8 @@ struct Camera {
 		float3 u = unit(cross(vUp, w));
 		float3 v = cross(w, u);
 
-		float3 viewportU   = u * viewportWidth;
-		float3 viewportV   = v * viewportHeight;
+		float3 viewportU = u * viewportWidth;
+		float3 viewportV = v * viewportHeight;
 		float3 pixelDeltaU = viewportU / (float)IMAGE_WIDTH;
 		float3 pixelDeltaV = viewportV / (float)IMAGE_HEIGHT;
 		float3 viewportLowerLeftCorner = ((lookFrom - (viewportU / 2.0f)) - (viewportV / 2.0f)) - (w * focusDistance);
@@ -32,7 +31,7 @@ struct Camera {
 		float3 defocusDiscU = u * defocusRadius;
 		float3 defocusDiscV = v * defocusRadius;
 
-		this->blockOffset     = make_float3(0.0f, 0.0f, 0.0f);
+		this->blockOffset     = make_float3(0.0f);
 		this->origin          = lookFrom;
 		this->horizontal      = viewportU;
 		this->vertical        = viewportV;

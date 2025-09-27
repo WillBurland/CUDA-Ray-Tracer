@@ -1,10 +1,9 @@
 #pragma once
 
 #include "bounding_box.cuh"
-#include "material.cuh"
 #include "triangle.cuh"
-#include "vec_utils.cuh"
 
+#include <float.h>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -43,8 +42,8 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 	std::vector<float3> vertices, normals;
 	std::vector<Triangle> triangles;
 	std::string line;
-	float3 min = make_float3(0.0f, 0.0f, 0.0f);
-	float3 max = make_float3(0.0f, 0.0f, 0.0f);
+	float3 min = make_float3(FLT_MAX);
+	float3 max = make_float3(-FLT_MAX);
 
 	while (std::getline(meshFile, line)) {
 		std::istringstream iss(line);

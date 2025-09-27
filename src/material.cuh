@@ -1,12 +1,10 @@
 #pragma once
 
-#include "vec_utils.cuh"
-
 enum MaterialType {
-	LAMBERTIAN = 0,
-	METAL      = 1,
+	LAMBERTIAN  = 0,
+	METAL       = 1,
 	TRANSPARENT = 2,
-	EMISSIVE   = 3
+	EMISSIVE    = 3
 };
 
 struct Material {
@@ -15,8 +13,8 @@ struct Material {
 	float ior;
 	int type;
 
-   __host__ __device__ Material() :
-		albedo(make_float3(0.0f, 0.0f, 0.0f)),
+	__host__ __device__ Material() :
+		albedo(make_float3(0.0f)),
 		fuzz(0.0f),
 		ior(1.0f),
 		type(0) {}
@@ -36,7 +34,7 @@ struct Material {
 	}
 
 	static Material Transparent(float ior) {
-		return Material(make_float3(1.0f, 1.0f, 1.0f), 0.0f, ior, TRANSPARENT);
+		return Material(make_float3(1.0f), 0.0f, ior, TRANSPARENT);
 	}
 
 	static Material Emissive(float3 albedo, float power) {

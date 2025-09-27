@@ -42,13 +42,13 @@ __device__ bool transparentScatter(Ray ray, HitRecord* hitRecord, float3* attenu
 	scattered->origin = hitRecord->p;
 	scattered->direction = direction;
 	scattered->invDirection = inv(scattered->direction);
-	*attenuation = make_float3(1.0f, 1.0f, 1.0f);
+	*attenuation = make_float3(1.0f);
 	return true;
 }
 
 __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 	float3 unitDirection = unit(ray.direction);
-	float3 rayColour = make_float3(1.0f, 1.0f, 1.0f);
+	float3 rayColour = make_float3(1.0f);
 
 	int currentBounces = 0;
 	HitRecord hitRecord;
@@ -65,7 +65,7 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 						currentBounces++;
 						continue;
 					}
-					return make_float3(0.0f, 0.0f, 0.0f);
+					return make_float3(0.0f);
 				}
 				case METAL: {
 					if (metalScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
@@ -74,7 +74,7 @@ __device__ float3 rayColour(Ray ray, Scene* scene, ulong* seed) {
 						currentBounces++;
 						continue;
 					}
-					return make_float3(0.0f, 0.0f, 0.0f);
+					return make_float3(0.0f);
 				}
 				case TRANSPARENT: {
 					if (transparentScatter(ray, &hitRecord, &attenuation, &scattered, seed)) {
@@ -110,8 +110,8 @@ __global__ void shadePixel(unsigned char* image, Scene* scene) {
 	int idx = (IMAGE_HEIGHT - 1 - y) * IMAGE_WIDTH + x;
 	ulong seed = nextSeed((ulong)(idx * idx));
 
-	float3 pixelColour = make_float3(0.0f, 0.0f, 0.0f);
-	float3 colourToAdd = make_float3(0.0f, 0.0f, 0.0f);
+	float3 pixelColour = make_float3(0.0f);
+	float3 colourToAdd = make_float3(0.0f);
 
 	for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {
 		float u = ((float)x + randFloat(&seed)) / IMAGE_WIDTH;
