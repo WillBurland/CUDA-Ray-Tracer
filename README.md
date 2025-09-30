@@ -6,7 +6,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 
 ## Sample image from a recent commit
 
-<img width="1920" height="1080" alt="output" src="https://github.com/user-attachments/assets/45f5cfbe-463c-4663-82b1-cddcbbd80ffc" />
+<img width="1920" height="1080" alt="output" src="https://github.com/user-attachments/assets/ff96b643-a5f6-4a7f-a87f-42c5f285c152" />
 
 ## Feature set
 ✅ - Implemented
