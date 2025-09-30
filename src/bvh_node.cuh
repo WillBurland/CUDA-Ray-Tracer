@@ -4,47 +4,26 @@
 #include <vector>
 
 struct BVHNode {
-	float3 min, max;
-	int leftFirst;
-	int rightChild;
-	int count;
-
-	BVHNode() :
-		min(make_float3(0.0f)),
-		max(make_float3(0.0f)),
-		leftFirst(-1),
-		rightChild(-1),
-		count(0) {}
-
-	BVHNode(float3 min, float3 max, int leftFirst, int rightChild,  int count) :
-		min(min),
-		max(max),
-		leftFirst(leftFirst),
-		rightChild(rightChild),
-		count(count) {}
+	float3 min{FLT_MAX}, max{-FLT_MAX};
+	int leftFirst{-1}, rightChild{-1};
+	int count{0};
 };
 
-inline int getBVHDepth(BVHNode* nodes, int i) {
+__host__ inline int getBVHDepth(const BVHNode* nodes, const int i) {
 	const BVHNode& n = nodes[i];
 	return n.count > 0 ? 1 : 1 + std::max(getBVHDepth(nodes, n.leftFirst), getBVHDepth(nodes, n.leftFirst + 1));
 }
 
-inline float getAxis(float3 &v, int axis) {
+__host__ inline float getAxis(const float3& v, const int axis) {
 	return axis == 0 ? v.x : (axis == 1 ? v.y : v.z);
 }
 
-inline void triangleBounds(Triangle &t, float3 &minOut, float3 &maxOut) {
-	float3 p1 = t.p0 + t.edge1;
-	float3 p2 = t.p0 + t.edge2;
-	minOut = fminf3(t.p0, fminf3(p1, p2));
-	maxOut = fmaxf3(t.p0, fmaxf3(p1, p2));
-}
-
-inline int partition(std::vector<int> &triIndices, int start, int count, int axis, float splitPos, std::vector<Triangle> &tris) {
-	int i = start, j = start + count - 1;
+__host__ inline int partition(std::vector<int>& triIndices, const int start, const int count, const int axis, const float splitPos, const std::vector<Triangle>& tris) {
+	int i = start;
+	int j = start + count - 1;
 	while (i <= j) {
-		Triangle& t = tris[triIndices[i]];
-		float3 centroid = (t.p0 + (t.p0 + t.edge1) * 0.5f + (t.p0 + t.edge2) * 0.5f) / 3.0f;
+		const Triangle& t = tris[triIndices[i]];
+		const float3 centroid = (t.p0 + (t.p0 + t.edge1) * 0.5f + (t.p0 + t.edge2) * 0.5f) / 3.0f;
 		if (getAxis(centroid, axis) < splitPos)
 			i++;
 		else
@@ -53,15 +32,15 @@ inline int partition(std::vector<int> &triIndices, int start, int count, int axi
 	return i;
 }
 
-inline int buildBVH(BVHNode* nodes, int &nodeCount, std::vector<int> &triIndices, int start, int count, std::vector<Triangle> &tris) {
-	int nodeIndex = nodeCount++;
+__host__ inline int buildBVH(BVHNode* nodes, int& nodeCount, std::vector<int>& triIndices, const int start, const int count, const std::vector<Triangle>& tris) {
+	const int nodeIndex = nodeCount++;
 	BVHNode& node = nodes[nodeIndex];
 
 	float3 minB = make_float3(FLT_MAX);
 	float3 maxB = make_float3(-FLT_MAX);
 	for (int i = start; i < start + count; i++) {
 		float3 triMin, triMax;
-		triangleBounds(tris[triIndices[i]], triMin, triMax);
+		tris[triIndices[i]].bounds(triMin, triMax);
 		minB = fminf3(minB, triMin);
 		maxB = fmaxf3(maxB, triMax);
 	}
@@ -74,9 +53,9 @@ inline int buildBVH(BVHNode* nodes, int &nodeCount, std::vector<int> &triIndices
 		return nodeIndex;
 	}
 
-	int axis = maxComponent(node.max - node.min);
-	float splitPos = (getAxis(node.min, axis) + getAxis(node.max, axis)) * 0.5f;
-	int mid = partition(triIndices, start, count, axis, splitPos, tris);
+	const int axis = maxComponent(node.max - node.min);
+	const float splitPos = (getAxis(node.min, axis) + getAxis(node.max, axis)) * 0.5f;
+	const int mid = partition(triIndices, start, count, axis, splitPos, tris);
 
 	if (mid == start || mid == start + count) {
 		node.leftFirst = start;
@@ -84,8 +63,8 @@ inline int buildBVH(BVHNode* nodes, int &nodeCount, std::vector<int> &triIndices
 		return nodeIndex;
 	}
 
-	int left  = buildBVH(nodes, nodeCount, triIndices, start, mid - start, tris);
-	int right = buildBVH(nodes, nodeCount, triIndices, mid, count - (mid - start), tris);
+	const int left = buildBVH(nodes, nodeCount, triIndices, start, mid - start, tris);
+	const int right = buildBVH(nodes, nodeCount, triIndices, mid, count - (mid - start), tris);
 
 	node.leftFirst = left;
 	node.rightChild = right;

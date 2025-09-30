@@ -2,11 +2,14 @@
 
 #include "bounding_box.cuh"
 #include "camera.cuh"
+#include "material.cuh"
 #include "sphere.cuh"
 #include "triangle.cuh"
 #include "bvh_node.cuh"
 
 struct Scene {
+	Material* materials;
+	int numMaterials;
 	Sphere* spheres;
 	int numSpheres;
 	Triangle* triangles;
@@ -19,16 +22,19 @@ struct Scene {
 	int hdrImageWidth, hdrImageHeight;
 	Camera camera;
 
-	Scene(
-		Sphere* spheres, int numSpheres,
-		Triangle* triangles, int numTriangles,
+	__host__ Scene(
+		Material* materials, const int numMaterials,
+		Sphere* spheres, const int numSpheres,
+		Triangle* triangles, const int numTriangles,
 		BoundingBox* boundingBox,
-		BVHNode* bvhNodes, int numBVHNodes,
+		BVHNode* bvhNodes, const int numBVHNodes,
 		int* triIndices,
-		cudaTextureObject_t hdrTex,
-		int hdrImageWidth, int hdrImageHeight,
-		Camera camera
+		const cudaTextureObject_t hdrTex,
+		const int hdrImageWidth, const int hdrImageHeight,
+		const Camera camera
 	) :
+		materials(materials),
+		numMaterials(numMaterials),
 		spheres(spheres),
 		numSpheres(numSpheres),
 		triangles(triangles),

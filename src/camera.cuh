@@ -6,38 +6,27 @@ struct Camera {
 	float3 origin;
 	float3 horizontal, vertical, lowerLeftCorner;
 	float3 defocusDiscU, defocusDiscV;
-	float3 blockSize, blockOffset;
 	float focusDistance, aperture;
 
-	Camera(float3 lookFrom, float3 lookAt, float3 vUp, float vFov, float focusDistance, float fStop) {
-		float aperture = 2.0f * atanf(1.0f / (2.0f * fStop));
+	__host__ Camera(const float3 lookFrom, const float3 lookAt, const float3 vUp, const float vFov, const float focusDistance, const float fStop) {
+		const float viewportHeight = 2.0f * tanf(vFov * 3.141592654f / 360.0f) * focusDistance;
 
-		float theta = vFov * (float)3.141592654 / 180.0f;
-		float h = tan(theta / 2);
-		float viewportHeight = 2.0f * h * focusDistance;
-		float viewportWidth  = ASPECT_RATIO * viewportHeight;
+		const float3 w = unit(lookFrom - lookAt);
+		const float3 u = unit(cross(vUp, w));
+		const float3 v = cross(w, u);
 
-		float3 w = unit(lookFrom - lookAt);
-		float3 u = unit(cross(vUp, w));
-		float3 v = cross(w, u);
+		const float3 viewportU = u * ASPECT_RATIO * viewportHeight;
+		const float3 viewportV = v * viewportHeight;
 
-		float3 viewportU = u * viewportWidth;
-		float3 viewportV = v * viewportHeight;
-		float3 pixelDeltaU = viewportU / (float)IMAGE_WIDTH;
-		float3 pixelDeltaV = viewportV / (float)IMAGE_HEIGHT;
-		float3 viewportLowerLeftCorner = ((lookFrom - (viewportU / 2.0f)) - (viewportV / 2.0f)) - (w * focusDistance);
-		
-		float defocusRadius = focusDistance * tan(aperture / 2.0f);
-		float3 defocusDiscU = u * defocusRadius;
-		float3 defocusDiscV = v * defocusRadius;
+		const float aperture = 2.0f * atanf(0.5f / fStop);
+		const float defocusRadius = focusDistance * tanf(aperture * 0.5f);
 
-		this->blockOffset     = make_float3(0.0f);
 		this->origin          = lookFrom;
 		this->horizontal      = viewportU;
 		this->vertical        = viewportV;
-		this->lowerLeftCorner = viewportLowerLeftCorner;
-		this->defocusDiscU    = defocusDiscU;
-		this->defocusDiscV    = defocusDiscV;
+		this->lowerLeftCorner = lookFrom - viewportU * 0.5f - viewportV * 0.5f - w * focusDistance;
+		this->defocusDiscU    = u * defocusRadius;
+		this->defocusDiscV    = v * defocusRadius;
 		this->focusDistance   = focusDistance;
 		this->aperture        = aperture;
 	}

@@ -2,4 +2,4 @@
 
 #include "scene.cuh"
 
-void renderImage(unsigned char* image, Scene* scene);
+__host__ void renderImage(unsigned char* image, const Scene* scene);

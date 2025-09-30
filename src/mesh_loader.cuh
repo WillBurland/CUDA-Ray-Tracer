@@ -8,37 +8,36 @@
 #include <sstream>
 #include <vector>
 
-float3 rotate(const float3 &v, const float3 &rotDeg) {
+__host__ float3 rotate(const float3& v, const float3& rotDeg) {
 	float3 vr = v;
 
-	float degToRad = 3.14159265f / 180.0f;
-	float cx = cosf(rotDeg.x * degToRad);
-	float sx = sinf(rotDeg.x * degToRad);
-	float cy = cosf(rotDeg.y * degToRad);
-	float sy = sinf(rotDeg.y * degToRad);
-	float cz = cosf(rotDeg.z * degToRad);
-	float sz = sinf(rotDeg.z * degToRad);
+	const float degToRad = 3.14159265f / 180.0f;
+	const float cx = cosf(rotDeg.x * degToRad);
+	const float sx = sinf(rotDeg.x * degToRad);
+	const float cy = cosf(rotDeg.y * degToRad);
+	const float sy = sinf(rotDeg.y * degToRad);
+	const float cz = cosf(rotDeg.z * degToRad);
+	const float sz = sinf(rotDeg.z * degToRad);
 
-	float y1 = vr.y * cx - vr.z * sx;
-	float z1 = vr.y * sx + vr.z * cx;
+	const float y1 = vr.y * cx - vr.z * sx;
+	const float z1 = vr.y * sx + vr.z * cx;
 	vr.y = y1;
 	vr.z = z1;
 
-	float x2 = vr.x * cy + vr.z * sy;
-	float z2 = -vr.x * sy + vr.z * cy;
+	const float x2 = vr.x * cy + vr.z * sy;
+	const float z2 = -vr.x * sy + vr.z * cy;
 	vr.x = x2;
 	vr.z = z2;
 
-	float x3 = vr.x * cz - vr.y * sz;
-	float y3 = vr.x * sz + vr.y * cz;
+	const float x3 = vr.x * cz - vr.y * sz;
+	const float y3 = vr.x * sz + vr.y * cz;
 	vr.x = x3;
 	vr.y = y3;
 
 	return vr;
 }
 
-
-void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, float3 rotation, Material material, Triangle* &h_triangles, int &numTriangles, BoundingBox* &h_boundingBox, bool smoothNormals) {
+__host__ void loadTriangles(std::ifstream& meshFile, const float3 scaling, const float3 translation, const float3 rotation, const int materialId, Triangle*& h_triangles, int& numTriangles, BoundingBox*& h_boundingBox, const bool smoothNormals) {
 	std::vector<float3> vertices, normals;
 	std::vector<Triangle> triangles;
 	std::string line;
@@ -54,7 +53,7 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 			float x, y, z;
 			iss >> x >> y >> z;
 
-			float3 v = (rotate(make_float3(x, y, z), rotation) * scaling) + translation;
+			const float3 v = (rotate(make_float3(x, y, z), rotation) * scaling) + translation;
 			vertices.push_back(v);
 
 			min.x = std::min(min.x, v.x);
@@ -75,8 +74,8 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 
 			while (iss >> vertSpec) {
 				int vi = 0, ni = 0;
-				int firstSlash = vertSpec.find('/');
-				int secondSlash = vertSpec.find('/', firstSlash + 1);
+				const int firstSlash = vertSpec.find('/');
+				const int secondSlash = vertSpec.find('/', firstSlash + 1);
 
 				if (firstSlash == -1) {
 					vi = std::stoi(vertSpec);
@@ -98,12 +97,12 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 			}
 
 			for (int i = 1; i + 1 < faceIndices.size(); i++) {
-				float3 n0 = faceNormals[0] 	 != -1 ? normals[faceNormals[0]] :
+				const float3 n0 = faceNormals[0] 	 != -1 ? normals[faceNormals[0]] :
 					unit(cross(
 						vertices[faceIndices[1]] - vertices[faceIndices[0]],
 						vertices[faceIndices[2]] - vertices[faceIndices[0]]));
-				float3 n1 = faceNormals[i]   != -1 ? normals[faceNormals[i]]   : n0;
-				float3 n2 = faceNormals[i+1] != -1 ? normals[faceNormals[i+1]] : n0;
+				const float3 n1 = faceNormals[i]   != -1 ? normals[faceNormals[i]]   : n0;
+				const float3 n2 = faceNormals[i+1] != -1 ? normals[faceNormals[i+1]] : n0;
 
 				triangles.push_back(Triangle(
 					vertices[faceIndices[0]],
@@ -112,7 +111,7 @@ void loadTriangles(std::ifstream &meshFile, float3 scaling, float3 translation, 
 					n0,
 					n1,
 					n2,
-					material,
+					materialId,
 					0,
 					smoothNormals
 				));

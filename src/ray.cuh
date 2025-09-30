@@ -3,24 +3,24 @@
 struct Ray {
 	float3 origin, direction, invDirection;
 
-	__device__ Ray(float3 origin, float3 direction, float3 invDirection) :
+	__device__ Ray(const float3 origin, const float3 direction, const float3 invDirection) :
 		origin(origin),
 		direction(unit(direction)),
 		invDirection(invDirection) {}
 
-	__device__ Ray(Camera camera, float u, float v, ulong* seed) {
+	__device__ Ray(const Camera camera, const float u, const float v, ulong* seed) {
 		if (camera.aperture <= 0) {
-			origin = camera.origin;
+			this->origin = camera.origin;
 		} else {
-			float3 p = randVecInUnitDisk(seed);
-			origin = camera.origin + camera.defocusDiscU * p.x + camera.defocusDiscV * p.y;
+			const float3 p = randVecInUnitDisk(seed);
+			this->origin = camera.origin + camera.defocusDiscU * p.x + camera.defocusDiscV * p.y;
 		}
 
-		direction = unit(camera.lowerLeftCorner + camera.horizontal * u + camera.vertical * v - origin);
-		invDirection = inv(direction);
+		this->direction = unit(camera.lowerLeftCorner + camera.horizontal * u + camera.vertical * v - this->origin);
+		this->invDirection = inv(this->direction);
+	}
+
+	__device__ float3 at(const float t) const {
+		return this->origin + this->direction * t;
 	}
 };
-
-__device__ float3 rayAt(Ray ray, float t) {
-	return ray.origin + ray.direction * t;
-}

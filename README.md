@@ -40,7 +40,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 | Diffuse material      | ✅         | ✅                | ✅                | ✅             |
 | Metalic material      | ❌         | ✅                | ✅                | ✅             |
 | Transparent material  | ❌         | ❌                | ✅                | ✅             |
-| Emmisive material     | ❌         | ❌                | 🟨                | 🟨             |
+| Emissive material     | ❌         | ❌                | 🟨                | 🟨             |
 | Specular/gloss        | ✅         | ❌                | ❌                | ❌             |
 
 ## Comparison to previous projects
@@ -92,9 +92,6 @@ A decent performance benefit is still found when moving from OpenCL to CUDA due 
 - Textures
 - Point lights
 - Importance sampling
-- Little optimisations:
-	- Store materials indexed globally, rather than per object
-	- Precompute things such as triangle edges
 
 ## Building the project
 

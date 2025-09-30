@@ -1,10 +1,10 @@
 #pragma once
 
-__host__ __device__ inline float3 make_float3(float a) {
+__host__ __device__ inline float3 make_float3(const float a) {
 	return make_float3(a, a, a);
 }
 
-__host__ __device__ inline float3 operator+(float3 a, float3 b) {
+__host__ __device__ inline float3 operator+(const float3 a, const float3 b) {
 	return make_float3(
 		a.x + b.x,
 		a.y + b.y,
@@ -12,14 +12,14 @@ __host__ __device__ inline float3 operator+(float3 a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float3& operator+=(float3& a, float3 b) {
+__host__ __device__ inline float3& operator+=(float3& a, const float3 b) {
 	a.x += b.x;
 	a.y += b.y;
 	a.z += b.z;
 	return a;
 }
 
-__host__ __device__ inline float3 operator-(float3 a, float3 b) {
+__host__ __device__ inline float3 operator-(const float3 a, const float3 b) {
 	return make_float3(
 		a.x - b.x,
 		a.y - b.y,
@@ -27,7 +27,11 @@ __host__ __device__ inline float3 operator-(float3 a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float3 operator*(float3 a, float3 b) {
+__host__ __device__ inline float3 operator-(const float3 a) {
+    return make_float3(-a.x, -a.y, -a.z);
+}
+
+__host__ __device__ inline float3 operator*(const float3 a, const float3 b) {
 	return make_float3(
 		a.x * b.x,
 		a.y * b.y,
@@ -35,14 +39,14 @@ __host__ __device__ inline float3 operator*(float3 a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float3& operator*=(float3& a, float3 b) {
+__host__ __device__ inline float3& operator*=(float3& a, const float3 b) {
 	a.x *= b.x;
 	a.y *= b.y;
 	a.z *= b.z;
 	return a;
 }
 
-__host__ __device__ inline float3 operator*(float3 a, float b) {
+__host__ __device__ inline float3 operator*(const float3 a, const float b) {
 	return make_float3(
 		a.x * b,
 		a.y * b,
@@ -50,7 +54,7 @@ __host__ __device__ inline float3 operator*(float3 a, float b) {
 	);
 }
 
-__host__ __device__ inline float3 operator*(float a, float3 b) {
+__host__ __device__ inline float3 operator*(const float a, const float3 b) {
 	return make_float3(
 		b.x * a,
 		b.y * a,
@@ -58,7 +62,7 @@ __host__ __device__ inline float3 operator*(float a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float3 operator/(float3 a, float b) {
+__host__ __device__ inline float3 operator/(const float3 a, const float b) {
 	return make_float3(
 		a.x / b,
 		a.y / b,
@@ -66,7 +70,7 @@ __host__ __device__ inline float3 operator/(float3 a, float b) {
 	);
 }
 
-__host__ __device__ inline float3 operator/(float a, float3 b) {
+__host__ __device__ inline float3 operator/(const float a, const float3 b) {
 	return make_float3(
 		a / b.x,
 		a / b.y,
@@ -74,18 +78,18 @@ __host__ __device__ inline float3 operator/(float a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float3& operator/=(float3& a, float b) {
+__host__ __device__ inline float3& operator/=(float3& a, const float b) {
 	a.x /= b;
 	a.y /= b;
 	a.z /= b;
 	return a;
 }
 
-__host__ __device__ inline float dot(float3 a, float3 b) {
+__host__ __device__ inline float dot(const float3 a, const float3 b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-__host__ __device__ inline float3 cross(float3 a, float3 b) {
+__host__ __device__ inline float3 cross(const float3 a, const float3 b) {
 	return make_float3(
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
@@ -93,20 +97,20 @@ __host__ __device__ inline float3 cross(float3 a, float3 b) {
 	);
 }
 
-__host__ __device__ inline float length2(float3 a) {
+__host__ __device__ inline float length2(const float3 a) {
 	return a.x * a.x + a.y * a.y + a.z * a.z;
 }
 
-__host__ __device__ inline float length(float3 a) {
+__host__ __device__ inline float length(const float3 a) {
 	return sqrtf(length2(a));
 }
 
-__host__ __device__ inline float3 unit(float3 a) {
+__host__ __device__ inline float3 unit(const float3 a) {
 	float len = length(a);
 	return len > 0.0f ? (a / len) : make_float3(0.0f);
 }
 
-__host__ __device__ inline float3 inv(float3 a) {
+__host__ __device__ inline float3 inv(const float3 a) {
 	return make_float3(
 		a.x != 0.0f ? 1.0f / a.x : 0.0f,
 		a.y != 0.0f ? 1.0f / a.y : 0.0f,
@@ -114,24 +118,24 @@ __host__ __device__ inline float3 inv(float3 a) {
 	);
 }
 
-__host__ __device__ inline float3 reflect(float3 v, float3 n) {
+__host__ __device__ inline float3 reflect(const float3 v, const float3 n) {
 	return v - n * 2.0f * dot(v, n);
 }
 
-__host__ __device__ inline float3 refract(float3 uv, float3 n, float etaiOverEtat) {
+__host__ __device__ inline float3 refract(const float3 uv, const float3 n, const float etaiOverEtat) {
 	float cosTheta = fminf(dot(uv * -1.0f, n), 1.0f);
 	float3 rOutPerp = etaiOverEtat * (uv + cosTheta * n);
 	float3 rOutParallel = (n * -1.0f) * sqrtf(fabsf(1.0f - length2(rOutPerp)));
 	return rOutPerp + rOutParallel;
 }
 
-__host__ __device__ inline float reflectance(float cosine, float refIdx) {
+__host__ __device__ inline float reflectance(const float cosine, const float refIdx) {
 	float r0 = (1 - refIdx) / (1 + refIdx);
 	r0 *= r0;
 	return r0 + (1 - r0) * powf((1 - cosine), 5);
 }
 
-__host__ __device__ inline ulong nextSeed(ulong seed) {
+__host__ __device__ inline ulong nextSeed(const ulong seed) {
 	return (seed * 0x5DEECE66D + 0xB) & ((1ULL << 48) - 1);
 }
 
@@ -170,7 +174,7 @@ __host__ __device__ inline float3 randUnitVec(ulong* seed) {
 	return unit(randVecInUnitSphere(seed));
 }
 
-__host__ __device__ inline bool nearZero(float3 a) {
+__host__ __device__ inline bool nearZero(const float3 a) {
 	float s = 1e-8;
 	return (fabsf(a.x) < s) && (fabsf(a.y) < s) && (fabsf(a.z) < s);
 }
@@ -182,7 +186,7 @@ __host__ __device__ inline float2 uv(float3 n) {
 		0.5f - asin(n.y) / (float)M_PI);
 }
 
-__host__ __device__ inline float3 clamp(float3 a, float min, float max) {
+__host__ __device__ inline float3 clamp(float3 a, const float min, const float max) {
 	return make_float3(
 		a.x = fminf(fmaxf(a.x, min), max),
 		a.y = fminf(fmaxf(a.y, min), max),
@@ -190,7 +194,7 @@ __host__ __device__ inline float3 clamp(float3 a, float min, float max) {
 	);
 }
 
-__host__ __device__ inline float maxComponent(float3 a) {
+__host__ __device__ inline float maxComponent(const float3 a) {
 	return fmaxf(fmaxf(a.x, a.y), a.z);
 }
 

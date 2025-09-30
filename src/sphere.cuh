@@ -1,14 +1,12 @@
 #pragma once
 
-#include "material.cuh"
-
 struct Sphere {
 	float3 centre;
 	float radius;
-	Material material;
+	int materialId;
 
-	Sphere(float3 centre, float radius, Material material) :
+	__host__ Sphere(const float3 centre, const float radius, const int materialId) :
 		centre(centre),
 		radius(radius),
-		material(material) {}
+		materialId(materialId) {}
 };
