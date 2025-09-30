@@ -65,8 +65,7 @@ struct HitRecord {
 			this->hitPoint = r.at(t0);
 			this->material = materials[tri.materialId];
 			setFaceNormal(r, unit(tri.smoothNormals ? (1.0f - u - v) * tri.n0 + u * tri.n1 + v * tri.n2 : tri.faceNormal));
-
-			return true;
+			return this->frontFace;
 		}
 		
 		return false;

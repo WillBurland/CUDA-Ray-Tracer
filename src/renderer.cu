@@ -107,14 +107,18 @@ __global__ void shadePixel(unsigned char* image, const Scene* scene) {
 	ulong seed = nextSeed((ulong)(idx * idx));
 
 	float3 pixelColour = make_float3(0.0f);
-	float3 colourToAdd = make_float3(0.0f);
 
 	for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {
-		const float u = ((float)x + randFloat(&seed)) / IMAGE_WIDTH;
-		const float v = ((float)y + randFloat(&seed)) / IMAGE_HEIGHT;
-
-		const Ray ray = Ray(scene->camera, u, v, &seed);
-		colourToAdd = rayColour(ray, scene, &seed);
+		float3 colourToAdd = rayColour(
+			Ray(
+				scene->camera,
+				(x + randFloat(&seed)) / IMAGE_WIDTH,
+				(y + randFloat(&seed)) / IMAGE_HEIGHT,
+				&seed
+			),
+			scene,
+			&seed
+		);
 
 		if (isnan(colourToAdd.x)) colourToAdd.x = 0.0f;
 		if (isnan(colourToAdd.y)) colourToAdd.y = 0.0f;
@@ -123,13 +127,7 @@ __global__ void shadePixel(unsigned char* image, const Scene* scene) {
 		pixelColour += colourToAdd;
 	}
 
-	pixelColour /= (float)SAMPLES_PER_PIXEL;
-
-	pixelColour.x = sqrtf(pixelColour.x);
-	pixelColour.y = sqrtf(pixelColour.y);
-	pixelColour.z = sqrtf(pixelColour.z);
-
-	pixelColour = clamp(pixelColour, 0.0f, 1.0f);
+	pixelColour = clamp3(powf3(pixelColour / SAMPLES_PER_PIXEL, 1.0f / 2.2f), 0.0f, 1.0f);
 
 	image[idx * 3 + 0] = pixelColour.x * 255.0f;
 	image[idx * 3 + 1] = pixelColour.y * 255.0f;
