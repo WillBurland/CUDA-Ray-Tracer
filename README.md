@@ -38,9 +38,9 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 | HDRI                  | ❌         | ❌                | ✅                | ✅             |
 | JSON scene descriptor | ❌         | ❌                | ❌                | ❌             |
 | Diffuse material      | ✅         | ✅                | ✅                | ✅             |
-| Metalic material      | ❌         | ✅                | ✅                | ✅             |
+| Metallic material     | ❌         | ✅                | ✅                | ✅             |
 | Transparent material  | ❌         | ❌                | ✅                | ✅             |
-| Emissive material     | ❌         | ❌                | 🟨                | 🟨             |
+| Emissive material     | ❌         | ❌                | 🟨                | ✅             |
 | Specular/gloss        | ✅         | ❌                | ❌                | ❌             |
 
 ## Comparison to previous projects
@@ -95,7 +95,20 @@ A decent performance benefit is still found when moving from OpenCL to CUDA due 
 
 ## Building the project
 
-Todo (but basically just run the makefile after installing some packages)
+### Requirements
+
+- Nvidia GPU >= GTX 10XX
+- Packages: `cuda gcc make`
+
+### Building
+
+`make all`
+
+### Running
+
+`make run`
+
+Alternatively, run the executable at `build/raytracer`
 
 ## References & Inspiration
 

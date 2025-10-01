@@ -34,11 +34,6 @@ int main() {
 	printf("Compute capability: %d.%d\n", prop.major, prop.minor);
 	printf("Total global memory: %llu MB\n", (unsigned long long)(prop.totalGlobalMem / (1024 * 1024)));
 
-	if (prop.major < 7 || (prop.major == 7 && prop.minor < 5)) {
-		printf("GPU compute capability %d.%d is too old. Requires >=7.5.\n", prop.major, prop.minor);
-		return 1;
-	}
-
 	printf("=== Parsing scene data === \n");
 	std::chrono::steady_clock::time_point beginParse = std::chrono::steady_clock::now();
 
