@@ -22,7 +22,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 | Real time             | ✅         | ❌                | ❌                | ❌             |
 | Actual ray tracer     | ❌         | ✅                | ✅                | ✅             |
 | GPU rendering         | ❌         | ❌                | ✅                | ✅             |
-| Rendering preview     | ➖         | ❌                | ✅                | ❌             |
+| Rendering preview     | ➖         | ❌                | ✅                | 🟨             |
 | Sphere primitives     | ✅         | ✅                | ✅                | ✅             |
 | Triangles             | ❌         | ❌                | ✅                | ✅             |
 | OBJ meshes            | ➖         | ➖                | 🟨                | ✅             |
@@ -36,7 +36,7 @@ As the 4th iteration of my raytracing project, I wanted to get an even higher le
 | Depth of field        | ❌         | ❌                | ✅                | ✅             |
 | Point lights          | ✅         | ❌                | ❌                | ❌             |
 | HDRI                  | ❌         | ❌                | ✅                | ✅             |
-| JSON scene descriptor | ❌         | ❌                | ❌                | ❌             |
+| JSON scene descriptor | ❌         | ❌                | ❌                | ✅             |
 | Diffuse material      | ✅         | ✅                | ✅                | ✅             |
 | Metallic material     | ❌         | ✅                | ✅                | ✅             |
 | Transparent material  | ❌         | ❌                | ✅                | ✅             |
@@ -86,19 +86,19 @@ A decent performance benefit is still found when moving from OpenCL to CUDA due 
 
 ## To-do
 
-- JSON scene descriptor
 - Rendering preview
 - Multiple mesh support
 - Textures
 - Point lights
 - Importance sampling
+- Scene organisation (i.e. all scene files in folder/zip)
 
 ## Building the project
 
 ### Requirements
 
 - Nvidia GPU >= GTX 10XX
-- Packages: `cuda gcc make`
+- Packages: `cuda gcc make nlohmann-json`
 
 ### Building
 

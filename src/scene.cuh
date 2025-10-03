@@ -21,6 +21,10 @@ struct Scene {
 	cudaTextureObject_t hdrTex;
 	int hdrImageWidth, hdrImageHeight;
 	Camera camera;
+	int imageWidth;
+	int imageHeight;
+	int samplesPerPixel;
+	int maxBounces;
 
 	__host__ Scene(
 		Material* materials, const int numMaterials,
@@ -31,7 +35,9 @@ struct Scene {
 		int* triIndices,
 		const cudaTextureObject_t hdrTex,
 		const int hdrImageWidth, const int hdrImageHeight,
-		const Camera camera
+		const Camera camera,
+		const int imageWidth, const int imageHeight,
+		const int samplesPerPixel, const int maxBounces
 	) :
 		materials(materials),
 		numMaterials(numMaterials),
@@ -46,5 +52,9 @@ struct Scene {
 		hdrTex(hdrTex),
 		hdrImageWidth(hdrImageWidth),
 		hdrImageHeight(hdrImageHeight),
-		camera(camera) {}
+		camera(camera),
+		imageWidth(imageWidth),
+		imageHeight(imageHeight),
+		samplesPerPixel(samplesPerPixel),
+		maxBounces(maxBounces) {}
 };

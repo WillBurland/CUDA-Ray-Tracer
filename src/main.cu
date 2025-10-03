@@ -3,6 +3,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
+#include "json_utils.cuh"
 #include "mesh_loader.cuh"
 #include "renderer.cuh"
 
@@ -28,6 +29,14 @@ int main() {
 	cudaDeviceProp prop;
 	cudaGetDeviceProperties(&prop, device);
 
+	HostSceneData scene;
+	try {
+		scene = loadSceneDescription("assets/scenes/demo_scene.json");
+	} catch (const std::exception& e) {
+		printf("Scene load failed: %s\n", e.what());
+		return 1;
+	}
+
 	printf(" === Chosen device === \n");
 	printf("Number: %d\n", device);
 	printf("Name: %s\n", prop.name);
@@ -38,41 +47,35 @@ int main() {
 	std::chrono::steady_clock::time_point beginParse = std::chrono::steady_clock::now();
 
 	unsigned char* image = nullptr;
-	cudaMalloc(&image, IMAGE_WIDTH * IMAGE_HEIGHT * BYTES_PER_PIXEL);
+	cudaMalloc(&image, scene.imageWidth * scene.imageHeight * 3);
 
-	std::vector<Material> h_materials;
-	h_materials.push_back(Material::Lambertian(0, make_float3(0.3f, 0.5f, 0.4f)));
-	h_materials.push_back(Material::Metal(1, make_float3(0.8f, 0.8f, 0.3f), 0.0f));
-	h_materials.push_back(Material::Metal(2, make_float3(0.3f, 0.8f, 0.3f), 0.05f));
-	h_materials.push_back(Material::Metal(3, make_float3(0.3f, 0.3f, 0.8f), 0.2f));
-	h_materials.push_back(Material::Transparent(4, 1.5f));
-	h_materials.push_back(Material::Emissive(5, make_float3(1.0f, 0.4f, 0.2f), 4.0f));
-	int numMaterials = h_materials.size();
+	CudaBuffer<Material> materials;
+	materials.allocate(scene.materials.size());
+	materials.copyFromHost(scene.materials.data());
 
-	std::vector<Sphere> h_spheres;
-	h_spheres.push_back(Sphere({  0.0f, -100.5f, -1.0f}, 100.0f, 0));
-	h_spheres.push_back(Sphere({ -4.5f,    1.8f,  0.5f},   2.5f, 1));
-	h_spheres.push_back(Sphere({  0.0f,    1.8f, -4.5f},   2.5f, 2));
-	h_spheres.push_back(Sphere({  2.1f,    0.27f, 2.0f},   0.8f, 4));
-	h_spheres.push_back(Sphere({  2.5f,   -0.2f,  0.8f},   0.4f, 5));
-	int numSpheres = h_spheres.size();
+	Sphere* d_spheres = nullptr;
+	int numSpheres = scene.spheres.size();
+	cudaMalloc(&d_spheres, numSpheres * sizeof(Sphere));
+	cudaMemcpy(d_spheres, scene.spheres.data(),
+			numSpheres * sizeof(Sphere), cudaMemcpyHostToDevice);
 
-	std::ifstream meshFile("assets/models/utah_teapot.obj");
-	if (!meshFile) {
-		printf("Unable to open OBJ file");
-		return 1;
-	}
 
 	Triangle* h_triangles = nullptr;
 	int numTriangles = 0;
 	BoundingBox* h_boundingBox = nullptr;
+	
+	std::ifstream meshFile(scene.mesh.obj_path);
+	if (!meshFile) {
+		printf("Unable to open OBJ file\n");
+		return 1;
+	}
 
 	loadTriangles(
 		meshFile,
-		make_float3(1.0f,   1.0f, 1.0f), // scaling
-		make_float3(0.0f,  -0.6f, 0.0f), // translation
-		make_float3(0.0f, -45.0f, 0.0f), // rotation (degrees)
-		3,
+		scene.mesh.scale,
+		scene.mesh.translation,
+		scene.mesh.rotation,
+		scene.mesh.materialId,
 		h_triangles,
 		numTriangles,
 		h_boundingBox,
@@ -154,32 +157,19 @@ int main() {
 	cudaMalloc(&d_boundingBox, sizeof(BoundingBox));
 	cudaMemcpy(d_boundingBox, h_boundingBox, sizeof(BoundingBox), cudaMemcpyHostToDevice);
 
-	Sphere* d_spheres;
-	cudaMalloc(&d_spheres, numSpheres * sizeof(Sphere));
-	cudaMemcpy(d_spheres, h_spheres.data(), numSpheres * sizeof(Sphere), cudaMemcpyHostToDevice);
-
-	Material* d_materials;
-	cudaMalloc(&d_materials, numMaterials * sizeof(Material));
-	cudaMemcpy(d_materials, h_materials.data(), numMaterials * sizeof(Material), cudaMemcpyHostToDevice);
-
-	Camera h_camera(
-		make_float3(6.0f, 2.5f, 3.0f), // lookFrom
-		make_float3(0.0f, 1.0f, 0.0f), // lookAt
-		make_float3(0.0f, 1.0f, 0.0f), // vUp
-		60.0f, // vFov
-		5.0f, // focusDistance
-		50.0f  // f-stop
-	);
+	Camera h_camera = scene.camera;
 
 	Scene h_scene(
-		d_materials, numMaterials,
+		materials.ptr, materials.size,
 		d_spheres, numSpheres,
 		d_triangles, numTriangles,
 		d_boundingBox,
 		d_nodes, h_nodes.size(),
 		d_triIndices,
 		texObj, width, height,
-		h_camera
+		h_camera,
+		scene.imageWidth, scene.imageHeight,
+		scene.samplesPerPixel, scene.maxBounces
 	);
 
 	Scene* d_scene;
@@ -187,27 +177,26 @@ int main() {
 	cudaMemcpy(d_scene, &h_scene, sizeof(Scene), cudaMemcpyHostToDevice);
 
 	std::chrono::steady_clock::time_point endParse = std::chrono::steady_clock::now();
-	printf("Done in %f s \n", (float)std::chrono::duration_cast<std::chrono::microseconds>(endParse - beginParse).count() / 1000000);
+	printf("Done in %f s \n", static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(endParse - beginParse).count()) / 1000000);
 
 	printf("=== Running kernel === \n");
 	std::chrono::steady_clock::time_point beginRender = std::chrono::steady_clock::now();
+	renderImage(image, d_scene, scene.imageWidth, scene.imageHeight);
 
-	renderImage(image, d_scene);
-
-	unsigned char* hostImage = new unsigned char[IMAGE_WIDTH * IMAGE_HEIGHT * BYTES_PER_PIXEL];
-	cudaMemcpy(hostImage, image, IMAGE_WIDTH * IMAGE_HEIGHT * BYTES_PER_PIXEL, cudaMemcpyDeviceToHost);
+	unsigned char* hostImage = new unsigned char[scene.imageWidth * scene.imageHeight * 3];
+	cudaMemcpy(hostImage, image, scene.imageWidth * scene.imageHeight * 3, cudaMemcpyDeviceToHost);
 	
 	std::chrono::steady_clock::time_point endRender = std::chrono::steady_clock::now();
-	printf("Done in %f s \n", (float)std::chrono::duration_cast<std::chrono::microseconds>(endRender - beginRender).count() / 1000000);
+	printf("Done in %f s \n", static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(endRender - beginRender).count()) / 1000000);
 
 	printf(" === Writing image === \n");
 	std::chrono::steady_clock::time_point beginWriting = std::chrono::steady_clock::now();
 
-	if (!stbi_write_png("output.png", IMAGE_WIDTH, IMAGE_HEIGHT, BYTES_PER_PIXEL, hostImage, IMAGE_WIDTH * BYTES_PER_PIXEL))
+	if (!stbi_write_png("output.png", scene.imageWidth, scene.imageHeight, 3, hostImage, scene.imageWidth * 3))
 		printf("Failed to write PNG");
 
 	std::chrono::steady_clock::time_point endWriting = std::chrono::steady_clock::now();
-	printf("Done in %f s \n", (float)std::chrono::duration_cast<std::chrono::microseconds>(endWriting - beginWriting).count() / 1000000);
+	printf("Done in %f s \n", static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(endWriting - beginWriting).count()) / 1000000);
 
 	cudaFree(image);
 	cudaFree(d_spheres);

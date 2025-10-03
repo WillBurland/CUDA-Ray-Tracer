@@ -2,6 +2,11 @@
 
 #include "hit_record.cuh"
 
+#include <cstdio>
+#include <thread>
+
+__device__ __managed__ unsigned int d_pixelsDone = 0;
+
 __device__ bool lambertianScatter(const Ray ray, const HitRecord* hitRecord, float3* attenuation, Ray* scattered, ulong* seed) {
 	float3 scatterDir = hitRecord->normal + randUnitVec(seed);
 	if (nearZero(scatterDir))
@@ -47,7 +52,7 @@ __device__ float3 rayColour(Ray ray, const Scene* scene, ulong* seed) {
 	int currentBounces = 0;
 	HitRecord hitRecord;
 
-	while (currentBounces < MAX_BOUNCES) {
+	while (currentBounces < scene->maxBounces) {
 		if (hitRecord.hitAnything(ray, 0.001f, INFINITY, scene)) {
 			Ray scattered(ray.origin, ray.direction, ray.invDirection);
 			float3 attenuation;
@@ -100,20 +105,20 @@ __device__ float3 rayColour(Ray ray, const Scene* scene, ulong* seed) {
 __global__ void shadePixel(unsigned char* image, const Scene* scene) {
 	const int x = blockIdx.x * blockDim.x + threadIdx.x;
 	const int y = blockIdx.y * blockDim.y + threadIdx.y;
-	if (x >= IMAGE_WIDTH || y >= IMAGE_HEIGHT)
+	if (x >= scene->imageWidth || y >= scene->imageHeight)
 		return;
 
-	const int idx = (IMAGE_HEIGHT - 1 - y) * IMAGE_WIDTH + x;
+	const int idx = (scene->imageHeight - 1 - y) * scene->imageWidth + x;
 	ulong seed = nextSeed((ulong)(idx * idx));
 
 	float3 pixelColour = make_float3(0.0f);
 
-	for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {
+	for (int i = 0; i < scene->samplesPerPixel; i++) {
 		float3 colourToAdd = rayColour(
 			Ray(
 				scene->camera,
-				(x + randFloat(&seed)) / IMAGE_WIDTH,
-				(y + randFloat(&seed)) / IMAGE_HEIGHT,
+				(x + randFloat(&seed)) / scene->imageWidth,
+				(y + randFloat(&seed)) / scene->imageHeight,
 				&seed
 			),
 			scene,
@@ -127,18 +132,53 @@ __global__ void shadePixel(unsigned char* image, const Scene* scene) {
 		pixelColour += colourToAdd;
 	}
 
-	pixelColour = clamp3(powf3(pixelColour / SAMPLES_PER_PIXEL, 1.0f / 2.2f), 0.0f, 1.0f);
+	pixelColour = clamp3(powf3(pixelColour / scene->samplesPerPixel, 1.0f / 2.2f), 0.0f, 1.0f);
 
 	image[idx * 3 + 0] = pixelColour.x * 255.0f;
 	image[idx * 3 + 1] = pixelColour.y * 255.0f;
 	image[idx * 3 + 2] = pixelColour.z * 255.0f;
+
+	atomicAdd(&d_pixelsDone, 1);
 }
 
-__host__ void renderImage(unsigned char* image, const Scene* scene) {
+__host__ void renderImage(unsigned char* image, const Scene* scene, const int width, const int height) {
 	const dim3 block(16, 16);
-	const dim3 grid((IMAGE_WIDTH + block.x - 1) / block.x,
-			  (IMAGE_HEIGHT + block.y - 1) / block.y);
+	const dim3 grid(
+		(width  + block.x - 1) / block.x,
+		(height + block.y - 1) / block.y
+	);
+
+	d_pixelsDone = 0;
 
 	shadePixel<<<grid, block>>>(image, scene);
+	
+	const unsigned int totalPixels = width * height;
+	const auto startTime = std::chrono::steady_clock::now();
+	int lastLineLength = 0;
+	while (true) {
+		const float progress = 100.0f * (float)(d_pixelsDone + 1) / totalPixels;
+		const float etaSec = std::chrono::duration_cast<std::chrono::seconds>(
+			std::chrono::steady_clock::now() - startTime).count() * (100.0f / progress - 1.0f);
+
+		char buffer[128];
+		const int n = snprintf(buffer, sizeof(buffer), "Rendering: %.2f%% | ETA: %.1fs", progress, etaSec);
+
+		if (n < lastLineLength) {
+			for (int i = n; i < lastLineLength; ++i)
+				buffer[i] = ' ';
+			buffer[lastLineLength] = '\0';
+		}
+		lastLineLength = n;
+
+		printf("\r%s", buffer);
+		fflush(stdout);
+
+		if (d_pixelsDone >= totalPixels)
+			break;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+
 	cudaDeviceSynchronize();
+	printf("\n");
 }

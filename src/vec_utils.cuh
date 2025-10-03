@@ -113,7 +113,7 @@ __host__ __device__ inline ulong nextSeed(const ulong seed) {
 
 __host__ __device__ inline float randFloat(ulong* seed) {
 	*seed = nextSeed(*seed);
-	return (float)(*seed & 0xFFFFFF) / (float)0x1000000;
+	return static_cast<float>(*seed & 0xFFFFFF) / static_cast<float>(0x1000000);
 }
 
 __host__ __device__ inline float3 randVecInUnitSphere(ulong* seed) {
@@ -154,8 +154,8 @@ __host__ __device__ inline bool nearZero(const float3 a) {
 __host__ __device__ inline float2 uv(float3 n) {
 	n = unit(n);
 	return make_float2(
-		0.5f + atan2(n.z, n.x) / (2.0f * (float)M_PI),
-		0.5f - asin(n.y) / (float)M_PI);
+		0.5f + atan2(n.z, n.x) / (2.0f * static_cast<float>(M_PI)),
+		0.5f - asin(n.y) / static_cast<float>(M_PI));
 }
 
 __host__ __device__ inline float3 clamp3(float3 a, const float min, const float max) {

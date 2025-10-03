@@ -1,0 +1,151 @@
+{
+	"settings": {
+		"width": 1280,
+		"height": 720,
+		"samples_per_pixel": 250,
+		"max_bounces": 50,
+		"hdri_path": "assets/images/skybox.hdr"
+	},
+	"camera": {
+		"position": {
+			"x": 6,
+			"y": 2.5,
+			"z": 3
+		},
+		"look_at": {
+			"x": 0,
+			"y": 1,
+			"z": 0
+		},
+		"up": {
+			"x": 0,
+			"y": 1,
+			"z": 0
+		},
+		"fov": 60,
+		"focus_distance": 5,
+		"f_stop": 50
+	},
+	"materials": [
+		{
+			"id": 0,
+			"type": "lambertian",
+			"albedo": {
+				"r": 0.3,
+				"g": 0.5,
+				"b": 0.4
+			}
+		},
+		{
+			"id": 1,
+			"type": "metal",
+			"albedo": {
+				"r": 0.8,
+				"g": 0.8,
+				"b": 0.3
+			},
+			"fuzz": 0
+		},
+		{
+			"id": 2,
+			"type": "metal",
+			"albedo": {
+				"r": 0.3,
+				"g": 0.8,
+				"b": 0.3
+			},
+			"fuzz": 0.05
+		},
+		{
+			"id": 3,
+			"type": "metal",
+			"albedo": {
+				"r": 0.3,
+				"g": 0.3,
+				"b": 0.8
+			},
+			"fuzz": 0.2
+		},
+		{
+			"id": 4,
+			"type": "transparent",
+			"ior": 1.5
+		},
+		{
+			"id": 5,
+			"type": "emissive",
+			"albedo": {
+				"r": 1,
+				"g": 0.4,
+				"b": 0.2
+			},
+			"power": 4
+		}
+	],
+	"spheres": [
+		{
+			"position": {
+				"x": 0,
+				"y": -100.5,
+				"z": -1
+			},
+			"radius": 100,
+			"materialId": 0
+		},
+		{
+			"position": {
+				"x": -4.5,
+				"y": 1.8,
+				"z": 0.5
+			},
+			"radius": 2.5,
+			"materialId": 1
+		},
+		{
+			"position": {
+				"x": 0,
+				"y": 1.8,
+				"z": -4.5
+			},
+			"radius": 2.5,
+			"materialId": 2
+		},
+		{
+			"position": {
+				"x": 2.1,
+				"y": 0.27,
+				"z": 2
+			},
+			"radius": 0.8,
+			"materialId": 4
+		},
+		{
+			"position": {
+				"x": 2.5,
+				"y": -0.2,
+				"z": 0.8
+			},
+			"radius": 0.4,
+			"materialId": 5
+		}
+	],
+	"mesh": {
+		"obj_path": "assets/models/utah_teapot.obj",
+		"translation": {
+			"x": 0,
+			"y": -0.6,
+			"z": 0
+		},
+		"scale": {
+			"x": 1,
+			"y": 1,
+			"z": 1
+		},
+		"rotation": {
+			"x": 0,
+			"y": -45,
+			"z": 0
+		},
+		"materialId": 3
+	}
+}

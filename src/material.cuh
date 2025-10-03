@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vec_utils.cuh"
+
 enum MaterialType {
 	UNDEFINED   = -1,
 	LAMBERTIAN  = 0,
